@@ -11,6 +11,8 @@ var (
 	exch     float64
 	coinfrom string
 	cointo   string
+
+        coinConfig api.CoinConfig
 )
 
 func init() {
@@ -28,13 +30,25 @@ Add -t and -d to get price exchange
 	flag.StringVar(&coinfrom, "f", "usd", "Specify coin (BTC, ETH, ...)")
 	flag.StringVar(&cointo, "t", "usd", "To use with -d (BTC, ETH, USD, ...)")
 	flag.Parse()
+
+        // TODO validate arguments here
+
+        data, err := os.ReadFile("config.json")
+        if err != nil {
+                panic(err)
+        }
+
+        coinConfig, err = api.FromJSON(data)
+        if err != nil {
+                panic(err)
+        }
 }
 
 func main() {
 	if coinfrom != "" {
 		if exch != 0 && cointo != "" {
 			// TODO make this from cmdline
-			f, err := api.GetExch(coinfrom, cointo, exch)
+			f, err := coinConfig.GetExch(coinfrom, cointo, exch)
 			if err != nil {
 				fmt.Printf("ERROR: %s\n", err)
 				os.Exit(1)
@@ -42,12 +56,12 @@ func main() {
 			fmt.Printf("%.8f %s are %.8f %s\n", exch, coinfrom, f, cointo)
 			os.Exit(0)
 		} else if exch == 0 && cointo == "" {
-			coin, err := api.GetPrice(coinfrom)
+			price, err := coinConfig.GetPrice(coinfrom)
 			if err != nil {
 				fmt.Printf("ERROR: %s\n", err)
 				os.Exit(1)
 			}
-			fmt.Println(coin.PriceUsd)
+			fmt.Println(price)
 			os.Exit(0)
 		}
 	}
