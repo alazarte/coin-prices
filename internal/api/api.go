@@ -18,10 +18,10 @@ type CoinResponse struct {
 }
 
 type CoinConfig struct {
-	PriceApi string `json:"priceApi"`
-	ExchApi string `json:"exchApi"`
+	PriceApi       string   `json:"priceApi"`
+	ExchApi        string   `json:"exchApi"`
 	SupportedCoins []string `json:"supportedCoins"`
-	SupportedFiat []string `json:"supportedFiat"`
+	SupportedFiat  []string `json:"supportedFiat"`
 }
 
 func FromJSON(data []byte) (CoinConfig, error) {

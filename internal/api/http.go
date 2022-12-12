@@ -1,9 +1,9 @@
 package api
 
 import (
-        "net/http"
-        "fmt"
-        "io"
+	"fmt"
+	"io"
+	"net/http"
 )
 
 func handleGet(url string) ([]byte, error) {
@@ -29,4 +29,3 @@ func handleGet(url string) ([]byte, error) {
 
 	return body, err
 }
-
