@@ -61,13 +61,12 @@ from price_history where coin = '%s' order by timestamp desc limit %d`, coin, li
 func isThereOldValues(coin string) (bool, error) {
 	// TODO: hardcoded
 	limit := 10
+	query := fmt.Sprintf(`select case when 
+(select count(*) from price_history where coin="%s") > %d 
+then "yes" else "no"
+end;`, coin, limit)
 
-	rows, err := db.Query(fmt.Sprintf(`select option from 
-(select *, case when 
-((select count(*) from price_history where coin="%s") > %d) 
-then "yes" else "no" end as option 
-from price_history 
-where coin="bitcoin") limit 1;`, coin, limit))
+	rows, err := db.Query(query)
 	if err != nil {
 		return false, err
 	}
@@ -93,9 +92,13 @@ func DeleteOlder(coin string) error {
 		return nil
 	}
 
-	_, err = db.Exec(fmt.Sprintf(`delete from price_history 
-where timestamp in (select timestamp from price_history where coin="%s"
-order by timestamp desc limit 3)`, coin))
+	// TODO only 1, because it runs everytime
+	query := fmt.Sprintf(`delete from price_history 
+where timestamp in 
+(select timestamp from price_history 
+where coin="%s" order by timestamp asc limit 1)`, coin)
+
+	_, err = db.Exec(query)
 	return err
 }
 

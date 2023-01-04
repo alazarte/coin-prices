@@ -63,12 +63,6 @@ func main() {
 	}
 
 	os.Exit(0)
-
-	/* else if exch == 0 && cointo == "" {
-		getAndPrintPrice()
-		getPriceHistory()
-		os.Exit(0)
-	} */
 }
 
 func configureUsage() {
@@ -135,20 +129,6 @@ func getAndPrintExchange() error {
 	fmt.Printf("%.8f %s are %.8f %s\n", exch, coinfrom, f, cointo)
 	return nil
 }
-
-/*
-func getAndPrintPrice() {
-	price, err := coinClient.GetPrice(coinfrom)
-	if err != nil {
-		fmt.Printf("ERROR: %s\n", err)
-		os.Exit(1)
-	}
-	if err := store.RecordPrice(coinfrom, fmt.Sprintf("%f", price)); err != nil {
-		fmt.Printf("WARN: %s\n", err)
-	}
-	fmt.Println(price)
-}
-*/
 
 func searchAndGetConfigFilepath() string {
 	homepath := os.Getenv("HOME")
