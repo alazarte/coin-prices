@@ -6,6 +6,7 @@ import (
 	"coin_prices/internal/store"
 	"flag"
 	"fmt"
+	"log"
 	"os"
 )
 
@@ -32,7 +33,7 @@ func init() {
 
 	cfg, err := clientFromJSON(configFilepath)
 	if err != nil {
-		fmt.Printf("Error configuring client:", err)
+		fmt.Printf("Error configuring client: %s\n", err)
 		os.Exit(1)
 	}
 	coinClient = cfg
@@ -41,24 +42,24 @@ func init() {
 func main() {
 	if plotPoints {
 		if err := plotPointsAndExit(); err != nil {
-			fmt.Printf("ERROR: %s\n", err)
+			log.Printf("Failed plotPointsAndExit(): %s\n", err)
 			os.Exit(1)
 		}
 		os.Exit(0)
 	}
 
 	if err := getAndPrintExchange(); err != nil {
-		fmt.Printf("ERROR: %s\n", err)
+		fmt.Printf("Failed getAndPrintExchange(): %s\n", err)
 		os.Exit(1)
 	}
 
 	if err := printPriceHistory(); err != nil {
-		fmt.Printf("ERROR: %s\n", err)
+		fmt.Printf("Failed printPriceHistory(): %s", err)
 		os.Exit(1)
 	}
 
 	if err := store.DeleteOlder(coinfrom); err != nil {
-		fmt.Printf("ERROR: %s\n", err)
+		fmt.Printf("Failed DeleteOlder(coinfrom=%s): %s\n", coinfrom, err)
 		os.Exit(1)
 	}
 
@@ -83,7 +84,7 @@ func configureFlags() {
 	flag.StringVar(&coinfrom, "f", "usd", "Specify coin (BTC, ETH, ...)")
 	flag.StringVar(&cointo, "t", "usd", "To use with -d (BTC, ETH, USD, ...)")
 	flag.StringVar(&configFilepath, "c", "", "Config filepath in json")
-	flag.StringVar(&dbFilepath, "db", "/home/al/.config/prices.sql", "DB filepath")
+	flag.StringVar(&dbFilepath, "db", "", "DB filepath")
 	flag.StringVar(&plotFilepath, "plotfile", "./points.png", "Output filepath for graph")
 	flag.BoolVar(&plotPoints, "plot", false, "Plot points in graph and exit")
 	flag.Parse()
@@ -95,8 +96,14 @@ func validateFlags() {
 		os.Exit(1)
 	}
 	if configFilepath == "" {
-		if configFilepath = searchAndGetConfigFilepath(); configFilepath == "" {
+		if configFilepath = searchAndGetFilepathFor("coin_prices.json"); configFilepath == "" {
 			fmt.Println("No config file found")
+			os.Exit(1)
+		}
+	}
+	if dbFilepath == "" {
+		if dbFilepath = searchAndGetFilepathFor("prices.sql"); dbFilepath == "" {
+			fmt.Println("No db file found")
 			os.Exit(1)
 		}
 	}
@@ -122,7 +129,7 @@ func getAndPrintExchange() error {
 	// the history would look weird
 	if exch == 1 {
 		if err := store.RecordPrice(coinfrom, fmt.Sprintf("%f", f)); err != nil {
-			fmt.Printf("WARN: %s\n", err)
+			log.Printf("Failed to save coin price: %s\n", err)
 		}
 	}
 
@@ -130,13 +137,13 @@ func getAndPrintExchange() error {
 	return nil
 }
 
-func searchAndGetConfigFilepath() string {
+func searchAndGetFilepathFor(filename string) string {
 	homepath := os.Getenv("HOME")
 	if homepath == "" {
 		return ""
 	}
 
-	formatPath := fmt.Sprintf("%s/.config/coin_prices.json", homepath)
+	formatPath := fmt.Sprintf("%s/.config/%s", homepath, filename)
 	if _, err := os.Stat(formatPath); err != nil {
 		return ""
 	}

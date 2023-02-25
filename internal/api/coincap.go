@@ -1,8 +1,8 @@
 package api
 
 import (
-        "fmt"
-        "encoding/json"
+	"encoding/json"
+	"fmt"
 	"strconv"
 )
 
@@ -30,7 +30,5 @@ func (c CoinConfig) getCoinPrice(coinStr string) (float64, error) {
 		return 0, err
 	}
 
-
 	return strconv.ParseFloat(data.Coin.PriceUsd, 64)
 }
-

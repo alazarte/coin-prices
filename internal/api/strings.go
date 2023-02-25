@@ -8,4 +8,3 @@ func isStringInArray(s string, arr []string) bool {
 	}
 	return false
 }
-
