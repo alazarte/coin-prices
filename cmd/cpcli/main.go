@@ -72,8 +72,8 @@ func configureUsage() {
 		flag.PrintDefaults()
 		fmt.Printf(`Either use -f alone to get the coin price
 Add -t and -d to get price exchange
-  cpcli -c bitcoin => bitcoin price
-  cpcli -c bitcoin -t monero -d 100 => how many bitcoin I get with 100 monero
+  cpcli -f bitcoin => bitcoin price
+  cpcli -f bitcoin -t monero -d 100 => how many bitcoin I get with 100 monero
 `)
 	}
 
