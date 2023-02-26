@@ -1,0 +1,12 @@
+{
+  "priceApi": "https://api.coincap.io/v2/assets",
+  "exchApi": "https://blockchain.info/ticker",
+  "supportedCoins": [
+    "bitcoin",
+    "monero",
+    "litecoin"
+  ],
+  "supportedFiat": [
+    "usd"
+  ]
+}
