@@ -1,7 +1,9 @@
 package graph
 
 import (
+	"fmt"
 	"strconv"
+	"time"
 
 	"gonum.org/v1/plot"
 	"gonum.org/v1/plot/plotter"
@@ -18,8 +20,14 @@ var (
 
 func PointsFromValues(allValues [][]string) (plotter.XYs, error) {
 	var points plotter.XYs
-	for i, value := range allValues {
-		xVal := float64(i)
+	for _, value := range allValues {
+		parsed, err := time.Parse(time.DateTime, value[2])
+		if err != nil {
+			fmt.Println("Failed to parse time from DB")
+			// TODO choose default for x
+		}
+
+		xVal := float64(parsed.Unix())
 
 		yVal, err := strconv.ParseFloat(value[1], 64)
 		if err != nil {

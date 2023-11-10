@@ -1,3 +1,6 @@
+// TODO better "first time running" messages, tried running with no config and
+// prices db file and is not clear what do I need to do
+
 package main
 
 import (
@@ -6,15 +9,15 @@ import (
 	"coin_prices/internal/store"
 	"flag"
 	"fmt"
-	"log"
 	"os"
 )
 
 var (
-	exch       float64
-	coinfrom   string
-	cointo     string
-	plotPoints bool
+	exch         float64
+	coinfrom     string
+	cointo       string
+	plotPoints   bool
+	printHistory bool
 
 	dbFilepath     string
 	configFilepath string
@@ -22,6 +25,9 @@ var (
 	// TODO decide for a name, either plot or graph
 	plotFilepath string
 	coinClient   api.CoinConfig
+
+	defaultConfigFilename string = "coin_prices.json"
+	defaultDBFilename     string = "coin_prices.db"
 )
 
 func init() {
@@ -42,15 +48,17 @@ func init() {
 func main() {
 	if plotPoints {
 		if err := plotPointsAndExit(); err != nil {
-			log.Printf("Failed plotPointsAndExit(): %s\n", err)
+			fmt.Printf("Failed plotPointsAndExit(): %s\n", err)
 			os.Exit(1)
 		}
 		os.Exit(0)
 	}
 
-	if err := getAndPrintExchange(); err != nil {
-		fmt.Printf("Failed getAndPrintExchange(): %s\n", err)
-		os.Exit(1)
+	if !printHistory {
+		if err := getAndPrintExchange(); err != nil {
+			fmt.Printf("Failed getAndPrintExchange(): %s\n", err)
+			os.Exit(1)
+		}
 	}
 
 	if err := printPriceHistory(); err != nil {
@@ -80,13 +88,14 @@ Add -t and -d to get price exchange
 }
 
 func configureFlags() {
-	flag.Float64Var(&exch, "d", 1, "Specify amount to convert")
-	flag.StringVar(&coinfrom, "f", "usd", "Specify coin (BTC, ETH, ...)")
-	flag.StringVar(&cointo, "t", "usd", "To use with -d (BTC, ETH, USD, ...)")
+	flag.Float64Var(&exch, "d", 1, "Specify amount to convert, used with -f and -t")
+	flag.StringVar(&coinfrom, "f", "usd", "Specify coin (btc, eth, ...)")
+	flag.StringVar(&cointo, "t", "usd", "To use with -d (btc, eth, usd, ...)")
 	flag.StringVar(&configFilepath, "c", "", "Config filepath in json")
 	flag.StringVar(&dbFilepath, "db", "", "DB filepath")
 	flag.StringVar(&plotFilepath, "plotfile", "./points.png", "Output filepath for graph")
-	flag.BoolVar(&plotPoints, "plot", false, "Plot points in graph and exit")
+	flag.BoolVar(&plotPoints, "plot", false, "Plot points in graph, used with -f")
+	flag.BoolVar(&printHistory, "h", false, "Print price history only")
 	flag.Parse()
 }
 
@@ -96,14 +105,14 @@ func validateFlags() {
 		os.Exit(1)
 	}
 	if configFilepath == "" {
-		if configFilepath = searchAndGetFilepathFor("coin_prices.json"); configFilepath == "" {
-			fmt.Println("No config file found")
+		if configFilepath = searchAndGetFilepathFor(defaultConfigFilename); configFilepath == "" {
+			fmt.Println("No config file found, copy the one provided in the repo")
 			os.Exit(1)
 		}
 	}
 	if dbFilepath == "" {
-		if dbFilepath = searchAndGetFilepathFor("prices.sql"); dbFilepath == "" {
-			fmt.Println("No db file found")
+		if dbFilepath = searchAndGetFilepathFor(defaultDBFilename); dbFilepath == "" {
+			fmt.Println("No db file found, create that file using `touch` only")
 			os.Exit(1)
 		}
 	}
@@ -129,7 +138,7 @@ func getAndPrintExchange() error {
 	// the history would look weird
 	if exch == 1 {
 		if err := store.RecordPrice(coinfrom, fmt.Sprintf("%f", f)); err != nil {
-			log.Printf("Failed to save coin price: %s\n", err)
+			fmt.Printf("Failed to save coin price: %s\n", err)
 		}
 	}
 
@@ -140,11 +149,13 @@ func getAndPrintExchange() error {
 func searchAndGetFilepathFor(filename string) string {
 	homepath := os.Getenv("HOME")
 	if homepath == "" {
+		fmt.Println("Failed reading env variable HOME")
 		return ""
 	}
 
 	formatPath := fmt.Sprintf("%s/.config/%s", homepath, filename)
 	if _, err := os.Stat(formatPath); err != nil {
+		fmt.Println("File doesn't exists:", formatPath)
 		return ""
 	}
 
@@ -152,7 +163,7 @@ func searchAndGetFilepathFor(filename string) string {
 }
 
 func printPriceHistory() error {
-	values, err := store.GetPriceHistory(coinfrom)
+	values, err := store.GetPriceHistory(coinfrom, false)
 	if err != nil {
 		return err
 	}
@@ -164,7 +175,7 @@ func printPriceHistory() error {
 }
 
 func plotPointsAndExit() error {
-	values, err := store.GetPriceHistory(coinfrom)
+	values, err := store.GetPriceHistory(coinfrom, true)
 	if err != nil {
 		return err
 	}

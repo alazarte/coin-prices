@@ -3,7 +3,6 @@ package store
 import (
 	"database/sql"
 	"fmt"
-	"log"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -16,13 +15,13 @@ func SetDBFilepath(filepath string) {
 	var err error
 	db, err = sql.Open("sqlite3", filepath)
 	if err != nil {
-		log.Println("Failed to open database:", filepath, err)
+		fmt.Println("Failed to open database:", filepath, err)
 		return
 	}
 
 	if _, err = db.Exec(`create table if not exists price_history 
 (coin string, price string, timestamp datetime default current_timestamp)`); err != nil {
-		log.Println("Failed to create table:", err)
+		fmt.Println("Failed to create table:", err)
 		return
 	}
 }
@@ -35,12 +34,17 @@ select '%s', '%s' where not exists
 	return err
 }
 
-func GetPriceHistory(coin string) ([][]string, error) {
+func GetPriceHistory(coin string, asc bool) ([][]string, error) {
 	var allValues = [][]string{}
 	limit := 10
 
+	order := "asc"
+	if !asc {
+		order = "desc"
+	}
+
 	rows, err := db.Query(fmt.Sprintf(`select coin, price, datetime(timestamp, "localtime")
-from price_history where coin = '%s' order by timestamp desc limit %d`, coin, limit))
+from price_history where coin = '%s' order by timestamp %s limit %d`, coin, order, limit))
 	if err != nil {
 		return allValues, err
 	}
